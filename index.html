@@ -139,6 +139,23 @@
       80% { opacity: 0.8; }
       100% { top: 100vh; opacity: 0; }
     }
+
+    /* Gray note at bottom */
+    #refeed-note {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #a8a8a8;
+      font-family: 'Silkscreen', sans-serif;
+      font-size: 1.1rem;
+      padding: 0.5em 1.5em;
+      border-radius: 6px;
+      opacity: 0.95;
+      z-index: 20;
+      visibility: hidden;
+      letter-spacing: 1px;
+    }
   </style>
 </head>
 <body>
@@ -161,6 +178,9 @@
   <span class="snowflake" style="left:50%; animation-delay:2s;">❄</span>
   <span class="snowflake" style="left:70%; animation-delay:1.5s;">❄</span>
   <span class="snowflake" style="left:90%; animation-delay:0.5s;">❄</span>
+
+  <!-- Gray note at bottom -->
+  <div id="refeed-note">PRESS CTRL+R TO RE-FEEDING</div>
 
   <script>
     const cat = document.getElementById('cat');
@@ -250,6 +270,9 @@
       type();
     }
 
+    const refeedNote = document.getElementById('refeed-note');
+    refeedNote.style.visibility = 'hidden'; // Hide initially
+
     function increaseHunger() {
       if (hunger < 100) {
         hunger += 10;
@@ -260,6 +283,9 @@
             happyBadge.style.visibility = 'visible';
             const badgeText = document.querySelector('.happy-badge-text');
             typeText(badgeText, sentence, 60); // 60ms per character
+            setTimeout(() => {
+              refeedNote.style.visibility = 'visible'; // Show note after 1 second
+            }, 1000);
           }, 300);
         }
       }
