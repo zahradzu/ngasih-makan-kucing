@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pixel Cat Feeding Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Italianno&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Pinyon+Script&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Playwrite+AU+QLD:wght@100..400&family=Saira:ital,wght@0,100..900;1,100..900&family=Silkscreen:wght@400;700&family=Sora:wght@100..800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background-image: url('background.png');
+      background-size: cover;
+      background-position: center;
+      overflow: hidden;
+      cursor: crosshair;
+      font-family: sans-serif;
+    }
+
+    #ground {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 100px;
+      background: #d0f0ff;
+    }
+
+    #cat {
+    position: absolute;
+    bottom: 100px;
+    width: 120px;
+    height: 120px;
+    background-size: contain;      
+    background-repeat: no-repeat;
+    background-position: center;   
+    transition: left 0.3s linear;
+    }
+
+    .food {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: #d2a679; /* light brown */
+      border-radius: 50%; /* make it circular */
+    }
+
+    #hunger-bar-container {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      width: 30px;
+      height: 200px;
+      border: 2px solid #333;
+      background: #eee;
+      display: flex;
+      align-items: flex-end;
+    }
+
+    #hunger-bar {
+      width: 100%;
+      height: 50%;
+      background: orange;
+      transition: height 0.3s;
+    }
+
+    #happy-badge {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(255, 255, 255, 0.0); /* transparent overlay */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      visibility: hidden;
+      z-index: 10;
+    }
+
+    .happy-badge-icon {
+      height: 200px; /* slightly bigger than box */
+      width: 200px;
+      margin-right: -28px; /* overlap the box */
+      z-index: 2;
+    }
+
+    .happy-badge-content {
+      display: flex;
+      align-items: center;
+      background: #F5C709;
+      border: 4px solid #A16804;
+      border-radius: 8px;
+      padding: 0.5em 2em 0.5em 2.5em; /* extra left padding for overlap */
+      box-shadow: 0 2px 8px rgba(161, 104, 4, 0.15);
+      position: relative;
+      z-index: 1;
+    }
+
+    .happy-badge-text {
+      font-family: 'Silkscreen', sans-serif;
+      font-size: 2.5rem;
+      color: #A16804;
+      letter-spacing: 2px;
+      transform: translateX(10px);
+      position: relative;
+      z-index: 1;
+      white-space: nowrap;
+    }
+
+    .happy-badge-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(255,255,255,0.7); /* semi-transparent white */
+      z-index: 0;
+      pointer-events: none;
+      border-radius: 0;
+    }
+
+    /* Snowflake styles */
+    .snowflake {
+      position: fixed;
+      top: -40px;
+      font-size: 2rem;
+      color: white;
+      opacity: 0.8;
+      pointer-events: none;
+      z-index: 0;
+      animation: snow-fall 6s linear infinite;
+      text-shadow: 0 0 8px #fff, 0 0 2px #bdf;
+    }
+
+    @keyframes snow-fall {
+      0% { top: -40px; opacity: 0.8; }
+      80% { opacity: 0.8; }
+      100% { top: 100vh; opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div id="ground"></div>
+  <div id="cat"></div>
+  <div id="hunger-bar-container">
+    <div id="hunger-bar"></div>
+  </div>
+  <div id="happy-badge">
+    <div class="happy-badge-overlay"></div>
+    <img src="cat-badge-face.png" alt="Cat Badge" class="happy-badge-icon">
+    <div class="happy-badge-content">
+      <span class="happy-badge-text">Cat is happy!</span>
+    </div>
+  </div>
+
+  <!-- Add snowflakes -->
+  <span class="snowflake" style="left:10%; animation-delay:0s;">❄</span>
+  <span class="snowflake" style="left:30%; animation-delay:1s;">❄</span>
+  <span class="snowflake" style="left:50%; animation-delay:2s;">❄</span>
+  <span class="snowflake" style="left:70%; animation-delay:1.5s;">❄</span>
+  <span class="snowflake" style="left:90%; animation-delay:0.5s;">❄</span>
+
+  <script>
+    const cat = document.getElementById('cat');
+    const hungerBar = document.getElementById('hunger-bar');
+    const happyBadge = document.getElementById('happy-badge');
+
+    let hunger = 50;
+    let targetX = window.innerWidth / 2;
+    let lastX = targetX; // track previous position
+
+    // Move cat with mouse (only x-axis)
+    document.addEventListener('mousemove', (e) => {
+      targetX = e.clientX - 40;
+
+      // Check direction
+      if (targetX > lastX) {
+        cat.style.backgroundImage = "url('cat-right-winter.png')";
+      } else if (targetX < lastX) {
+        cat.style.backgroundImage = "url('cat-left-winter.png')";
+      }
+
+      lastX = targetX;
+      cat.style.left = targetX + 'px';
+    });
+
+    // Drop food on click
+    document.addEventListener('click', (e) => {
+      const food = document.createElement('div');
+      food.classList.add('food');
+      food.style.left = e.clientX - 10 + 'px';
+      food.style.top = e.clientY - 10 + 'px';
+      document.body.appendChild(food);
+
+    // Animate food fall
+    const fallInterval = setInterval(() => {
+    let top = parseInt(food.style.top);
+
+    // Get cat's position and size
+    const catRect = cat.getBoundingClientRect();
+    const foodRect = food.getBoundingClientRect();
+
+    // Check collision with cat
+    const isColliding =
+        foodRect.left < catRect.right &&
+        foodRect.right > catRect.left &&
+        foodRect.top < catRect.bottom &&
+        foodRect.bottom > catRect.top;
+
+    if (isColliding) {
+        clearInterval(fallInterval);
+        setTimeout(() => {
+        food.remove();
+        increaseHunger();
+        }, 100);
+    } else if (top < window.innerHeight - 120) {
+        food.style.top = top + 5 + 'px';
+    } else {
+        // Stop falling if it reaches the ground, but don't remove
+        clearInterval(fallInterval);
+    }
+    }, 20);
+    });
+
+    const happySentences = [
+      "Cat is happy!",
+      "Meow! You did it!",
+      "Purrfect feeding!",
+      "The cat feels loved!",
+      "Yay! Cat is full!",
+      "So much yum!",
+      "Happy kitty, happy life!",
+      "You made the cat's day!",
+      "Cat's belly is full!",
+      "That was delicious!"
+    ];
+
+    function typeText(element, text, speed = 60) {
+      element.textContent = '';
+      let i = 0;
+      function type() {
+        if (i < text.length) {
+          element.textContent += text[i];
+          i++;
+          setTimeout(type, speed);
+        }
+      }
+      type();
+    }
+
+    function increaseHunger() {
+      if (hunger < 100) {
+        hunger += 10;
+        hungerBar.style.height = hunger + '%';
+        if (hunger >= 100) {
+          setTimeout(() => {
+            const sentence = happySentences[Math.floor(Math.random() * happySentences.length)];
+            happyBadge.style.visibility = 'visible';
+            const badgeText = document.querySelector('.happy-badge-text');
+            typeText(badgeText, sentence, 60); // 60ms per character
+          }, 300);
+        }
+      }
+    }
+
+    // Initial cat position
+    cat.style.left = targetX + 'px';
+  </script>
+</body>
+</html>
